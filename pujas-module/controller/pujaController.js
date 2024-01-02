@@ -7,7 +7,7 @@ const axios = require("axios");
 
 const listarPujas = async (req, res) => {
     try {
-        const tokenCheck = await axios.post('http://localhost:5003/api/v2/usuarios/checkToken', {}, {
+        const tokenCheck = await axios.post('https://el-rastro-a7-backend.vercel.app/api/v2/usuarios/checkToken', {}, {
             headers: {
                 "Authorization": req.headers.authorization
             }
@@ -41,7 +41,7 @@ const listarPujas = async (req, res) => {
 
 const guardarPuja = async (req, res) => {
     try {
-        const tokenCheck = await axios.post('http://localhost:5003/api/v2/usuarios/checkToken', {}, {
+        const tokenCheck = await axios.post('https://el-rastro-a7-backend.vercel.app/api/v2/usuarios/checkToken', {}, {
             headers: {
                 "Authorization": req.headers.authorization
             }
@@ -72,7 +72,7 @@ const guardarPuja = async (req, res) => {
                         req.body.cantidad,
                         req.body.producto
                     )
-                    await axios.put(`http://localhost:5001/api/v2/productos/`,
+                    await axios.put(`https://el-rastro-a7-backend.vercel.app/api/v2/productos/`,
                         {
                             id: req.body.producto,
                             puja: pujaCreada
@@ -98,7 +98,7 @@ const guardarPuja = async (req, res) => {
 
 const borrarPuja = async (req, res) => {
     try {
-        const tokenCheck = await axios.post('http://localhost:5003/api/v2/usuarios/checkToken', {}, {
+        const tokenCheck = await axios.post('https://el-rastro-a7-backend.vercel.app/api/v2/usuarios/checkToken', {}, {
             headers: {
                 "Authorization": req.headers.authorization
             }
@@ -117,7 +117,7 @@ const borrarPuja = async (req, res) => {
                 // Una vez borrada la puja, se actualiza la puja más alta del producto si procede
                 if (pujasProducto.length === 0) {
                     nuevaPujaMasAlta = {};
-                    await axios.put(`http://localhost:5001/api/v2/productos/`,
+                    await axios.put(`https://el-rastro-a7-backend.vercel.app/api/v2/productos/`,
                         {
                             id: puja.producto,
                             puja: nuevaPujaMasAlta
@@ -130,7 +130,7 @@ const borrarPuja = async (req, res) => {
                     );
                 } else if (pujasProducto[pujasProducto.length - 1].cantidad < puja.cantidad) {
                     nuevaPujaMasAlta = pujasProducto[pujasProducto.length - 1];
-                    await axios.put(`http://localhost:5001/api/v2/productos/`,
+                    await axios.put(`https://el-rastro-a7-backend.vercel.app/api/v2/productos/`,
                         {
                             id: puja.producto,
                             puja: nuevaPujaMasAlta
@@ -155,7 +155,7 @@ const borrarPuja = async (req, res) => {
 
 const borrarPujasPorProducto = async (req, res) => {
     try {
-        const tokenCheck = await axios.post('http://localhost:5003/api/v2/usuarios/checkToken', {}, {
+        const tokenCheck = await axios.post('https://el-rastro-a7-backend.vercel.app/api/v2/usuarios/checkToken', {}, {
             headers: {
                 "Authorization": req.headers.authorization
             }

@@ -158,7 +158,6 @@ const checkTokenInCache = async (req, res) => {
     try {
         const token = req.headers.authorization;
         const result = await checkTokenInLog(token);
-        console.log(result);
         res.status(result.status).send({message: result.message});
     } catch (error) {
         res.status(500).send({success: false, message: error.message});

@@ -5,7 +5,7 @@ const axios = require("axios");
 
 const getCoordinatesFromPostalCode = async (req, res, next) => {
     try {
-        const tokenCheck = await axios.post('http://localhost:5003/api/v2/usuarios/checkToken', {}, {
+        const tokenCheck = await axios.post('https://el-rastro-a7-backend.vercel.app/api/v2/usuarios/checkToken', {}, {
             headers: {
                 "Authorization": req.headers.authorization
             }
@@ -26,7 +26,7 @@ const getCoordinatesFromPostalCode = async (req, res, next) => {
 
 const getHuellaCarbono = async (req, res) => {
     try {
-        const tokenCheck = await axios.post('http://localhost:5003/api/v2/usuarios/checkToken', {}, {
+        const tokenCheck = await axios.post('https://el-rastro-a7-backend.vercel.app/api/v2/usuarios/checkToken', {}, {
             headers: {
                 "Authorization": req.headers.authorization
             }
