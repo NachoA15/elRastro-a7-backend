@@ -53,7 +53,6 @@ const deleteTokenFromLog = async (token) => {
 
 const checkNewToken = async (token) => {
     const res = await verifyGoogleToken(token);
-    console.log(res);
     if (res.status === 200) {
         await createOrUpdateUserFromToken(res.data);
 
@@ -67,6 +66,7 @@ const checkNewToken = async (token) => {
 
 const checkTokenInLog = async (token) => {
     const tokenData = searchToken(token);
+    console.log('Token: ' + token + '\nLog: ' + tokenLog)
     if (tokenData !== null) {
         const currentTimestampSec = Date.now();
         if (currentTimestampSec > tokenData.tokenData.expiration) {
