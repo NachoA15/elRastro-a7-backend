@@ -66,7 +66,7 @@ const checkNewToken = async (token) => {
 
 const checkTokenInLog = async (token) => {
     const tokenData = searchToken(token);
-    console.log('Token: ' + token + '\nLog: ' + tokenLog)
+    console.log('Log: ' + tokenLog + '\nToken: ' + token)
     if (tokenData !== null) {
         const currentTimestampSec = Date.now();
         if (currentTimestampSec > tokenData.tokenData.expiration) {
