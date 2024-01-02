@@ -7,15 +7,27 @@ const axios = require("axios");
 
 const listarProductos = async(req, res) => {
     try {
-        if (typeof req.params.id !== 'undefined' && req.params.id !== null && req.params.id !== '') {
-            const producto = await serviceProducto.findById(req.params.id);
-            res.status(200).send({producto: producto});
-        } else if (typeof req.query.usuario !== 'undefined' && req.query.usuario !== null && req.query.usuario !== '') {
-            const productos = await serviceProducto.findByUsuario(req.query.usuario);
-            res.status(200).send({productos: productos});
+        const tokenCheck = await axios.post('http://localhost:5003/api/v2/usuarios/checkToken', {}, {
+            headers: {
+                "Authorization": req.headers.authorization
+            }
+        }).then((result) => {
+            return result;
+        });
+
+        if (tokenCheck.status < 200 && tokenCheck.status > 299) {
+            res.status(tokenCheck.status).send(tokenCheck.message)
         } else {
-            const productos = await serviceProducto.findAll();
-            res.status(200).send({productos: productos});
+            if (typeof req.params.id !== 'undefined' && req.params.id !== null && req.params.id !== '') {
+                const producto = await serviceProducto.findById(req.params.id);
+                res.status(200).send({producto: producto});
+            } else if (typeof req.query.usuario !== 'undefined' && req.query.usuario !== null && req.query.usuario !== '') {
+                const productos = await serviceProducto.findByUsuario(req.query.usuario);
+                res.status(200).send({productos: productos});
+            } else {
+                const productos = await serviceProducto.findAll();
+                res.status(200).send({productos: productos});
+            }
         }
     } catch (error) {
         res.status(500).send({success: false, message: error.message});
@@ -24,8 +36,20 @@ const listarProductos = async(req, res) => {
 
 const filtrarProductos = async(req, res) => {
     try {
-        const productos = await serviceProducto.filterProductos(req.body.usuario, req.body.texto, req.body.orden);
-        res.status(200).send({productos: productos});
+        const tokenCheck = await axios.post('http://localhost:5003/api/v2/usuarios/checkToken', {}, {
+            headers: {
+                "Authorization": req.headers.authorization
+            }
+        }).then((result) => {
+            return result;
+        });
+
+        if (tokenCheck.status < 200 && tokenCheck.status > 299) {
+            res.status(tokenCheck.status).send(tokenCheck.message)
+        } else {
+            const productos = await serviceProducto.filterProductos(req.body.usuario, req.body.texto, req.body.orden);
+            res.status(200).send({productos: productos});
+        }
     } catch (error) {
         res.status(500).send({success: false, message: error.message});
     }
@@ -33,12 +57,27 @@ const filtrarProductos = async(req, res) => {
 
 const listarProductosPorPujasUsuario = async(req, res) => {
     try {
-        const pujas = await axios.get(`http://localhost:5002/api/v2/pujas?usuario=${req.query.usuario}`)
-            .then((result) => {
-                return result.data.pujas;
+        const tokenCheck = await axios.post('http://localhost:5003/api/v2/usuarios/checkToken', {}, {
+            headers: {
+                "Authorization": req.headers.authorization
+            }
+        }).then((result) => {
+            return result;
+        });
+
+        if (tokenCheck.status < 200 && tokenCheck.status > 299) {
+            res.status(tokenCheck.status).send(tokenCheck.message)
+        } else {
+            const pujas = await axios.get(`http://localhost:5002/api/v2/pujas?usuario=${req.query.usuario}`, {
+                headers: {
+                    "Authorization": req.headers.authorization
+                }
+            }).then((result) => {
+                    return result.data.pujas;
             });
-        const productosByPujas = await serviceProducto.findByPujasUsuario(pujas);
-        res.status(200).send({productos: productosByPujas});
+            const productosByPujas = await serviceProducto.findByPujasUsuario(pujas);
+            res.status(200).send({productos: productosByPujas});
+        }
     } catch (error) {
         res.status(500).send({success: false, message: error.message});
     }
@@ -48,48 +87,65 @@ const listarProductosPorPujasUsuario = async(req, res) => {
 
 const guardarProducto = async(req, res) => {
     try {
-
-        if (typeof req.body.id !== "undefined" && req.body.id !== null && req.body.id !== '') {
-            const check = await  serviceProducto.checkProductoActualizable(req.body.id);
-            if (check !== 'ok' && typeof req.body.puja === 'undefined') {
-                res.status(409).send({message: check});
-            } else {
-                const producto = await serviceProducto.update(
-                    req.body.id,
-                    req.body.nombre,
-                    req.body.direccion,
-                    req.body.descripcion,
-                    req.body.precioInicial,
-                    req.body.fechaCierre,
-                    req.body.imagen,
-                    req.body.puja
-                );
-                res.status(200).send({message: 'Producto ' + req.body.id + ' actualizado con éxito', producto: producto});
+        const tokenCheck = await axios.post('http://localhost:5003/api/v2/usuarios/checkToken', {}, {
+            headers: {
+                "Authorization": req.headers.authorization
             }
+        }).then((result) => {
+            return result;
+        });
+
+        if (tokenCheck.status < 200 && tokenCheck.status > 299) {
+            res.status(tokenCheck.status).send(tokenCheck.message)
         } else {
-            const usuario = await axios.get(`http://localhost:5003/api/v2/usuarios?correo=${req.body.usuario}`)
-                .then((result) => {
-                    return result.data;
-                })
-
-            if(usuario === null || typeof usuario === 'undefined'){
-                res.status(400).send("El usuario no existe")
-            }else{
-                const check = await serviceProducto.checkProducto(req.body.nombre, req.body.usuario);
-
-                if (check !== 'ok'){
+            if (typeof req.body.id !== "undefined" && req.body.id !== null && req.body.id !== '') {
+                const check = await serviceProducto.checkProductoActualizable(req.body.id);
+                if (check !== 'ok' && typeof req.body.puja === 'undefined') {
                     res.status(409).send({message: check});
                 } else {
-                    const producto = await serviceProducto.create(
+                    const producto = await serviceProducto.update(
+                        req.body.id,
                         req.body.nombre,
                         req.body.direccion,
-                        req.body.usuario,
+                        req.body.descripcion,
                         req.body.precioInicial,
                         req.body.fechaCierre,
-                        req.body.descripcion,
-                        req.body.imagen
-                    )
-                    res.status(201).send({message: 'Producto creado con éxito', producto: producto});
+                        req.body.imagen,
+                        req.body.puja
+                    );
+                    res.status(200).send({
+                        message: 'Producto ' + req.body.id + ' actualizado con éxito',
+                        producto: producto
+                    });
+                }
+            } else {
+                const usuario = await axios.get(`http://localhost:5003/api/v2/usuarios?correo=${req.body.usuario}`, {
+                    headers: {
+                        "Authorization": req.headers.authorization
+                    }
+                }).then((result) => {
+                        return result.data;
+                    })
+
+                if (usuario === null || typeof usuario === 'undefined') {
+                    res.status(400).send("El usuario no existe")
+                } else {
+                    const check = await serviceProducto.checkProducto(req.body.nombre, req.body.usuario);
+
+                    if (check !== 'ok') {
+                        res.status(409).send({message: check});
+                    } else {
+                        const producto = await serviceProducto.create(
+                            req.body.nombre,
+                            req.body.direccion,
+                            req.body.usuario,
+                            req.body.precioInicial,
+                            req.body.fechaCierre,
+                            req.body.descripcion,
+                            req.body.imagen
+                        )
+                        res.status(201).send({message: 'Producto creado con éxito', producto: producto});
+                    }
                 }
             }
         }
@@ -102,14 +158,29 @@ const guardarProducto = async(req, res) => {
 
 const borrarProducto = async (req, res) => {
     try {
-        const producto = await serviceProducto.delete(req.params.id);
-        if (producto) {
-            await axios.delete(`http://localhost:5002/api/v2/pujas?producto=${req.params.id}`);
-            res.status(200).send({message: 'Producto ' + req.params.id + ' borrado con éxito', producto: producto});
-        } else {
-            res.status(400).send({message: 'No existe el producto ' + req.params.id});
-        }
+        const tokenCheck = await axios.post('http://localhost:5003/api/v2/usuarios/checkToken', {}, {
+            headers: {
+                "Authorization": req.headers.authorization
+            }
+        }).then((result) => {
+            return result;
+        });
 
+        if (tokenCheck.status < 200 && tokenCheck.status > 299) {
+            res.status(tokenCheck.status).send(tokenCheck.message)
+        } else {
+            const producto = await serviceProducto.delete(req.params.id);
+            if (producto) {
+                await axios.delete(`http://localhost:5002/api/v2/pujas?producto=${req.params.id}`, {
+                    headers: {
+                        "Authorization": req.headers.authorization
+                    }
+                });
+                res.status(200).send({message: 'Producto ' + req.params.id + ' borrado con éxito', producto: producto});
+            } else {
+                res.status(400).send({message: 'No existe el producto ' + req.params.id});
+            }
+        }
     } catch (error) {
         res.status(500).send({success: false, message: error.message});
     }
