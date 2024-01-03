@@ -15,7 +15,7 @@ const searchToken = (token) => {
 
 const verifyGoogleToken = async (token) => {
     try {
-        return await axios.get(`https://www.googleapis.com/oauth2/v3/tokeninfo?id_token=${token}`)
+        return await axios.get(`https://www.googleapis.com/oauth2/v1/tokeninfo?access_token=${token}`)
             .then((result) => {
                 return {status: 200, data: result.data};
             });
@@ -56,8 +56,8 @@ const checkNewToken = async (token) => {
     if (res.status === 200) {
         await createOrUpdateUserFromToken(res.data);
 
-        const currentTimestampSec = Date.now();
-        const tokenExpirationTimestamp = currentTimestampSec + res.data.exp;
+        const currentTimestampSec = Date.now() / 1000;
+        const tokenExpirationTimestamp = currentTimestampSec + res.data.expires_in;
         tokenLog.push({token: token, expiration: tokenExpirationTimestamp, email: res.data.email});
         return {status: 200, message: {email: res.data.email, token: token}};
     }
@@ -66,9 +66,8 @@ const checkNewToken = async (token) => {
 
 const checkTokenInLog = async (token) => {
     const tokenData = searchToken(token);
-    console.log('Log: ' + tokenLog + '\nToken: ' + token)
     if (tokenData !== null) {
-        const currentTimestampSec = Date.now();
+        const currentTimestampSec = Date.now() / 1000;
         if (currentTimestampSec > tokenData.tokenData.expiration) {
             tokenLog.splice(tokenData.index, 1);
             return {status: 401, message: 'El token ha expirado'};
