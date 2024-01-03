@@ -1,7 +1,6 @@
 const express = require('express')
 const { createUsuarioController, getUsuarioByIdController, deleteUsuarioController, updateUsuarioController,
-    updateValoracionController, getRatingUsuarioController, getValoracionUsuarioController, checkToken,
-    checkTokenInCache, logout
+    updateValoracionController, getRatingUsuarioController, getValoracionUsuarioController, checkToken, logout
 } = require('../controller/usuarioController')
 
 const routerUsuario = express.Router()
@@ -13,8 +12,7 @@ routerUsuario.put('/', updateUsuarioController)
 routerUsuario.put('/valoracion', updateValoracionController)
 routerUsuario.get('/valoracionMedia', getRatingUsuarioController)
 routerUsuario.get('/valoracion', getValoracionUsuarioController)
-routerUsuario.post('/logged', checkToken)
-routerUsuario.post('/checkToken', checkTokenInCache)
+routerUsuario.post('/checkToken', checkToken)
 routerUsuario.post('/logout', logout)
 
 module.exports = {

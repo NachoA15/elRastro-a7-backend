@@ -1,10 +1,12 @@
-const ServiceUsuario = require('./usuarioService')
-const serviceUsuario = new ServiceUsuario();
-
 const axios = require('axios')
 
 let tokenLog = [];
 
+/**
+ * Busca la información del token en el log
+ * @param token Token a buscar
+ * @returns {null|*}
+ */
 const searchToken = (token) => {
     let i = 0;
     while (i < tokenLog.length && tokenLog[i].token !== token) {
@@ -13,68 +15,74 @@ const searchToken = (token) => {
     return i >= tokenLog.length? null : {index: i, tokenData: tokenLog[i]};
 }
 
+/**
+ *  Verifica el token que recibe como parámetro mediante la API REST de Google
+ * @param token
+ * @returns {Promise<axios.AxiosResponse<any>|*>}
+ */
 const verifyGoogleToken = async (token) => {
     try {
         return await axios.get(`https://www.googleapis.com/oauth2/v1/tokeninfo?access_token=${token}`)
             .then((result) => {
-                return {status: 200, data: result.data};
+                return result.data;
             });
     } catch (error) {
-        return {status: 400, data: error.response.data.error_description};
+        return error.response.data;
     }
 }
 
-const createOrUpdateUserFromToken = async (data) => {
-    const usuario = await serviceUsuario.getUsuarioByCorreo(data.email);
-    if (usuario === null || typeof usuario === 'undefined') {
-        return await serviceUsuario.createUsuario(
-            {
-                nombre: data.name,
-                email: data.email,
-                imagen: data.picture
-            }
-        );
-    } else {
-        if (usuario.nombre !== data.name || typeof usuario.imagen === 'undefined' || usuario.imagen !== data.picture) {
-            await serviceUsuario.updateUsuario(data.email, data.name, data.picture);
-        }
-    }
-}
-
-const deleteTokenFromLog = async (token) => {
+const deleteTokenFromLog = (token) => {
     const tokenData = searchToken(token);
-
     if (tokenData !== null) {
         tokenLog.splice(tokenData.index, 1);
     }
-
-    return 'ok';
 }
 
-const checkNewToken = async (token) => {
-    const res = await verifyGoogleToken(token);
-    if (res.status === 200) {
-        await createOrUpdateUserFromToken(res.data);
-
-        const currentTimestampSec = Date.now() / 1000;
-        const tokenExpirationTimestamp = currentTimestampSec + res.data.expires_in;
-        tokenLog.push({token: token, expiration: tokenExpirationTimestamp, email: res.data.email});
-        return {status: 200, message: {email: res.data.email, token: token}};
-    }
-    return {status: 401, message: 'Acceso no autorizado. Token error: ' + res.data};
+/**
+ * Comprueba que el usuario al que pertenece el token tiene los permisos necesarios para realizar la operación
+ * solicitada.
+ * @param tokenData
+ * @param method
+ * @param userEmail
+ * @returns {boolean}
+ */
+const checkPermission = (tokenData, method, userEmail) => {
+    return !(typeof userEmail !== 'undefined' &&
+        (method === 'PUT' || method === 'DELETE') && tokenData.email !== userEmail);
 }
 
-const checkTokenInLog = async (token) => {
+const checkGoogleToken = async (token) => {
     const tokenData = searchToken(token);
-    if (tokenData !== null) {
-        const currentTimestampSec = Date.now() / 1000;
-        if (currentTimestampSec > tokenData.tokenData.expiration) {
-            tokenLog.splice(tokenData.index, 1);
-            return {status: 401, message: 'El token ha expirado'};
+    const currentTimestampSec = Date.now() / 1000;
+
+    // Comprueba si los datos del token ya están en el log
+    if (tokenData == null) {   // En caso de que no lo esté
+        const res = await verifyGoogleToken(token); // Se verifica mediante la API REST de Google
+        if (!res.error) {
+            // Si no hay ningún error se guarda la información del token en el log
+            const tokenExpirationTimestamp = currentTimestampSec + res.expires_in;
+            const newTokenData = {token: token, expiration: tokenExpirationTimestamp, email: res.email};
+            tokenLog.push(newTokenData);
+
+            /* Si el token se ha verificado con éxito, se comprueba que el usuario que ha enviado el token
+            * tiene permisos para realizar la operación */
+            return 'ok';
+        } else {
+            // Si hay error se devuelve el mensaje informativo
+            return 'Token Error: ' + res.error_description;
         }
-        return {status: 200, message: 'Token correcto'};
+    } else {    // En caso de que el token esté en el log
+        // Se comprueba la expiración del token
+        if (currentTimestampSec > tokenData.tokenData.expiration) {
+            // Si el token ha expirado se borra del log
+            tokenLog.splice(tokenData.index, 1);
+            return 'El token ha expirado.';
+        }
+
+        /* Si el token se ha verificado con éxito, se comprueba que el usuario que ha enviado el token
+        * tiene permisos para realizar la operación */
+        return 'ok';
     }
-    return {status: 401, message: 'El token no es válido'};
 }
 
-module.exports = {checkNewToken, checkTokenInLog, deleteTokenFromLog}
+module.exports = {checkGoogleToken, deleteTokenFromLog}
